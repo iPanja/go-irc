@@ -1,4 +1,4 @@
-package parser
+package server_command
 
 import (
 	"reflect"
