@@ -28,7 +28,7 @@ var Gray = "\033[37m"
 var White = "\033[97m"
 
 func main() {
-	i := make(chan string)
+	i := make(chan string, 1)
 	o := make(chan string)
 
 	go handleUserInput(i)
@@ -72,12 +72,9 @@ func handleServerResponse(i chan string, o chan string) {
 			continue
 		}
 
-		if len(line) > 0 && line[0] == ':' {
-			fmt.Println(Magenta, line)
-			continue
-		}
+		i := parser.NewIRCMessage(line)
 
-		fmt.Println(line)
+		fmt.Println(i.FormatMessage())
 	}
 }
 

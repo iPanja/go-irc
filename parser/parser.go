@@ -1,6 +1,18 @@
 package parser
 
-import "strings"
+import (
+	"strings"
+)
+
+var Reset = "\033[0m"
+var Red = "\033[31m"
+var Green = "\033[32m"
+var Yellow = "\033[33m"
+var Blue = "\033[34m"
+var Magenta = "\033[35m"
+var Cyan = "\033[36m"
+var Gray = "\033[37m"
+var White = "\033[97m"
 
 type Parser interface {
 	ExtractData(buf []byte) map[string]string
@@ -11,20 +23,23 @@ type IRCMessage struct {
 	Command string   // (PRIVMSG, PING, JOIN, etc)
 	Params  []string // (channel, message content, etc)
 
-	Code int
-	Raw  string
+	Raw string
 }
 
 func NewIRCMessage(raw string) IRCMessage {
-	if len(raw) == 0 {
-		return IRCMessage{Raw: raw}
+	result := IRCMessage{Raw: raw}
+
+	parts := strings.Split(raw, "\x20") // space
+
+	if strings.HasPrefix(raw, "\x3a") { // colon
+		result.Prefix = parts[0]
+		parts = parts[1:]
 	}
 
-	if raw[0] == ':' {
-		// Prefix exists
-		parts := strings.SplitN(raw, " :", 2)
-		prefix := parts[0]
-	}
+	result.Command = parts[0]
+	result.Params = parts[1:]
+
+	return result
 }
 
 func ExtractPingPongCode(s string) string {
@@ -32,4 +47,21 @@ func ExtractPingPongCode(s string) string {
 	code := strings.Split(parts[1], "\n")[0]
 
 	return code
+}
+
+func (m IRCMessage) FormatMessage() string {
+	color := White
+
+	switch m.Command {
+	case "PRIVMSG":
+		color = Magenta
+	case "372", "005", "251", "253", "254", "255", "265", "266", "375":
+		color = Gray
+	case "NOTICE":
+		color = Cyan
+	default:
+		color = White
+	}
+
+	return color + " " + m.Raw
 }
